@@ -1,6 +1,6 @@
 -- 🎣 Fish It Auto Fishing by Agus Kurniawan
 -- Repo: https://github.com/agus4385/Memancing
--- Versi dengan UI modern dan kontrol kecepatan dari dalam game
+-- Versi dengan UI modern + tombol Auto ON/OFF
 
 -- 🌿 Konfigurasi dasar
 local Settings = {
@@ -18,16 +18,14 @@ local function createUI()
     gui.Parent = player:WaitForChild("PlayerGui")
 
     local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 270, 0, 160)
+    frame.Size = UDim2.new(0, 270, 0, 200)
     frame.Position = UDim2.new(0.02, 0, 0.2, 0)
     frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
     frame.BorderSizePixel = 0
     frame.Active = true
     frame.Draggable = true
     frame.Parent = gui
-
-    local corner = Instance.new("UICorner", frame)
-    corner.CornerRadius = UDim.new(0, 12)
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
     local title = Instance.new("TextLabel")
     title.Text = "🎣 Fish It Control Panel"
@@ -40,7 +38,7 @@ local function createUI()
 
     local status = Instance.new("TextLabel")
     status.Text = "Status: Ready"
-    status.Position = UDim2.new(0, 10, 0, 45)
+    status.Position = UDim2.new(0, 10, 0, 40)
     status.Size = UDim2.new(1, -20, 0, 25)
     status.BackgroundTransparency = 1
     status.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -51,7 +49,7 @@ local function createUI()
 
     local speedLabel = Instance.new("TextLabel")
     speedLabel.Text = "🎛️ Speed: " .. Settings.TimePerCast .. "s"
-    speedLabel.Position = UDim2.new(0, 10, 0, 75)
+    speedLabel.Position = UDim2.new(0, 10, 0, 70)
     speedLabel.Size = UDim2.new(1, -20, 0, 25)
     speedLabel.BackgroundTransparency = 1
     speedLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
@@ -60,24 +58,47 @@ local function createUI()
     speedLabel.TextXAlignment = Enum.TextXAlignment.Left
     speedLabel.Parent = frame
 
-    local slider = Instance.new("TextButton")
-    slider.Text = "⬆ Lebih Cepat / ⬇ Lebih Lambat"
-    slider.Size = UDim2.new(1, -20, 0, 35)
-    slider.Position = UDim2.new(0, 10, 0, 110)
-    slider.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
-    slider.TextColor3 = Color3.fromRGB(255, 255, 255)
-    slider.Font = Enum.Font.SourceSansBold
-    slider.TextSize = 16
-    slider.Parent = frame
-    Instance.new("UICorner", slider).CornerRadius = UDim.new(0, 8)
+    local toggle = Instance.new("TextButton")
+    toggle.Text = "🟢 AutoFish: ON"
+    toggle.Size = UDim2.new(1, -20, 0, 35)
+    toggle.Position = UDim2.new(0, 10, 0, 100)
+    toggle.BackgroundColor3 = Color3.fromRGB(30, 50, 30)
+    toggle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    toggle.Font = Enum.Font.SourceSansBold
+    toggle.TextSize = 16
+    toggle.Parent = frame
+    Instance.new("UICorner", toggle).CornerRadius = UDim.new(0, 8)
 
-    -- fungsi ubah kecepatan
+    local speedBtn = Instance.new("TextButton")
+    speedBtn.Text = "⬆ / ⬇ Speed"
+    speedBtn.Size = UDim2.new(1, -20, 0, 35)
+    speedBtn.Position = UDim2.new(0, 10, 0, 145)
+    speedBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
+    speedBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedBtn.Font = Enum.Font.SourceSansBold
+    speedBtn.TextSize = 16
+    speedBtn.Parent = frame
+    Instance.new("UICorner", speedBtn).CornerRadius = UDim.new(0, 8)
+
+    -- 🌈 Fungsi tombol ON/OFF
+    toggle.MouseButton1Click:Connect(function()
+        Settings.AutoFish = not Settings.AutoFish
+        if Settings.AutoFish then
+            toggle.Text = "🟢 AutoFish: ON"
+            toggle.BackgroundColor3 = Color3.fromRGB(30, 50, 30)
+        else
+            toggle.Text = "🔴 AutoFish: OFF"
+            toggle.BackgroundColor3 = Color3.fromRGB(50, 20, 20)
+        end
+    end)
+
+    -- ⚡ Fungsi ubah kecepatan
     local step = 0.1
-    slider.MouseButton1Click:Connect(function()
+    speedBtn.MouseButton1Click:Connect(function()
         Settings.TimePerCast = math.max(0.1, Settings.TimePerCast - step)
         speedLabel.Text = "🎛️ Speed: " .. string.format("%.1f", Settings.TimePerCast) .. "s"
     end)
-    slider.MouseButton2Click:Connect(function()
+    speedBtn.MouseButton2Click:Connect(function()
         Settings.TimePerCast = math.min(5, Settings.TimePerCast + step)
         speedLabel.Text = "🎛️ Speed: " .. string.format("%.1f", Settings.TimePerCast) .. "s"
     end)
@@ -92,18 +113,25 @@ local function startFishing()
         statusLabel = createUI()
     end
 
-    while Settings.AutoFish do
-        if statusLabel then
-            statusLabel.Text = "Status: 🎣 Memancing..."
+    task.spawn(function()
+        while task.wait(Settings.TimePerCast) do
+            if Settings.AutoFish then
+                if statusLabel then
+                    statusLabel.Text = "Status: 🎣 Memancing..."
+                end
+                task.wait(Settings.TimePerCast)
+                if statusLabel then
+                    statusLabel.Text = "Status: ✅ Selesai lempar"
+                end
+            else
+                if statusLabel then
+                    statusLabel.Text = "Status: ⏸️ Auto OFF"
+                end
+            end
         end
-        task.wait(Settings.TimePerCast)
-        if statusLabel then
-            statusLabel.Text = "Status: ✅ Selesai lempar"
-        end
-        task.wait(Settings.TimePerCast)
-    end
+    end)
 end
 
--- 🚀 Jalankan auto fishing
+-- 🚀 Jalankan
 task.spawn(startFishing)
 print("✅ Fish It Auto Fishing Loaded by Agus Kurniawan")
