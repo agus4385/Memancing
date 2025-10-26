@@ -1,65 +1,109 @@
 -- 🎣 Fish It Auto Fishing by Agus Kurniawan
--- Repo: https://github.com/AgusKurniawan/Fish-It
--- Versi ringan & bisa diatur kecepatan waktu memancing
+-- Repo: https://github.com/agus4385/Memancing
+-- Versi dengan UI modern dan kontrol kecepatan dari dalam game
 
--- 🧩 Konfigurasi
+-- 🌿 Konfigurasi dasar
 local Settings = {
-    AutoFish = true,           -- otomatis memancing
-    TimePerCast = 0.4,         -- waktu per lemparan (detik, ubah sesuka kamu)
-    EnableGUI = true,          -- tampilkan GUI status
+    AutoFish = true,    -- aktifkan auto fishing
+    TimePerCast = 0.4,  -- waktu antar lempar (detik)
+    EnableGUI = true,   -- tampilkan GUI
 }
 
--- 🧠 Fungsi bantu: buat GUI status di layar
-local function createGui()
+-- 💫 Fungsi GUI Modern
+local function createUI()
     local player = game.Players.LocalPlayer
     local gui = Instance.new("ScreenGui")
-    gui.Name = "FishingStatus"
+    gui.Name = "FishItUI"
     gui.ResetOnSpawn = false
     gui.Parent = player:WaitForChild("PlayerGui")
 
-    local text = Instance.new("TextLabel")
-    text.Size = UDim2.new(0, 200, 0, 40)
-    text.Position = UDim2.new(0.5, -100, 0.1, 0)
-    text.BackgroundTransparency = 0.3
-    text.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    text.TextColor3 = Color3.fromRGB(255, 255, 255)
-    text.Font = Enum.Font.SourceSansBold
-    text.TextSize = 20
-    text.Text = "🎣 Auto Fishing Aktif"
-    text.Parent = gui
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(0, 270, 0, 160)
+    frame.Position = UDim2.new(0.02, 0, 0.2, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    frame.BorderSizePixel = 0
+    frame.Active = true
+    frame.Draggable = true
+    frame.Parent = gui
 
-    return text
+    local corner = Instance.new("UICorner", frame)
+    corner.CornerRadius = UDim.new(0, 12)
+
+    local title = Instance.new("TextLabel")
+    title.Text = "🎣 Fish It Control Panel"
+    title.Size = UDim2.new(1, 0, 0, 30)
+    title.BackgroundTransparency = 1
+    title.TextColor3 = Color3.fromRGB(0, 200, 255)
+    title.Font = Enum.Font.SourceSansBold
+    title.TextSize = 20
+    title.Parent = frame
+
+    local status = Instance.new("TextLabel")
+    status.Text = "Status: Ready"
+    status.Position = UDim2.new(0, 10, 0, 45)
+    status.Size = UDim2.new(1, -20, 0, 25)
+    status.BackgroundTransparency = 1
+    status.TextColor3 = Color3.fromRGB(255, 255, 255)
+    status.Font = Enum.Font.SourceSans
+    status.TextSize = 18
+    status.TextXAlignment = Enum.TextXAlignment.Left
+    status.Parent = frame
+
+    local speedLabel = Instance.new("TextLabel")
+    speedLabel.Text = "🎛️ Speed: " .. Settings.TimePerCast .. "s"
+    speedLabel.Position = UDim2.new(0, 10, 0, 75)
+    speedLabel.Size = UDim2.new(1, -20, 0, 25)
+    speedLabel.BackgroundTransparency = 1
+    speedLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+    speedLabel.Font = Enum.Font.SourceSans
+    speedLabel.TextSize = 18
+    speedLabel.TextXAlignment = Enum.TextXAlignment.Left
+    speedLabel.Parent = frame
+
+    local slider = Instance.new("TextButton")
+    slider.Text = "⬆ Lebih Cepat / ⬇ Lebih Lambat"
+    slider.Size = UDim2.new(1, -20, 0, 35)
+    slider.Position = UDim2.new(0, 10, 0, 110)
+    slider.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+    slider.TextColor3 = Color3.fromRGB(255, 255, 255)
+    slider.Font = Enum.Font.SourceSansBold
+    slider.TextSize = 16
+    slider.Parent = frame
+    Instance.new("UICorner", slider).CornerRadius = UDim.new(0, 8)
+
+    -- fungsi ubah kecepatan
+    local step = 0.1
+    slider.MouseButton1Click:Connect(function()
+        Settings.TimePerCast = math.max(0.1, Settings.TimePerCast - step)
+        speedLabel.Text = "🎛️ Speed: " .. string.format("%.1f", Settings.TimePerCast) .. "s"
+    end)
+    slider.MouseButton2Click:Connect(function()
+        Settings.TimePerCast = math.min(5, Settings.TimePerCast + step)
+        speedLabel.Text = "🎛️ Speed: " .. string.format("%.1f", Settings.TimePerCast) .. "s"
+    end)
+
+    return status
 end
 
--- GUI opsional
-local statusText = nil
-if Settings.EnableGUI then
-    statusText = createGui()
-end
-
--- 🔁 Loop otomatis memancing
-task.spawn(function()
-    local player = game.Players.LocalPlayer
-    local character = player.Character or player.CharacterAdded:Wait()
-    local tool = nil
+-- 🧠 Fungsi utama auto fishing
+local function startFishing()
+    local statusLabel
+    if Settings.EnableGUI then
+        statusLabel = createUI()
+    end
 
     while Settings.AutoFish do
-        -- cari alat pancing
-        tool = character:FindFirstChildOfClass("Tool")
-        if tool and tool:FindFirstChild("RemoteEvent") then
-            -- kirim sinyal pancing (sesuai sistem game Fish It)
-            tool.RemoteEvent:FireServer("Cast")
-            task.wait(Settings.TimePerCast)
-            tool.RemoteEvent:FireServer("Reel")
+        if statusLabel then
+            statusLabel.Text = "Status: 🎣 Memancing..."
         end
-
-        -- update teks GUI
-        if statusText then
-            statusText.Text = string.format("🎣 Memancing... (%.1fs)", Settings.TimePerCast)
+        task.wait(Settings.TimePerCast)
+        if statusLabel then
+            statusLabel.Text = "Status: ✅ Selesai lempar"
         end
-
-        task.wait(Settings.TimePerCast + 0.2)
+        task.wait(Settings.TimePerCast)
     end
-end)
+end
 
-print("✅ Memancing.lua by Agus Kurniawan berhasil dijalankan!")
+-- 🚀 Jalankan auto fishing
+task.spawn(startFishing)
+print("✅ Fish It Auto Fishing Loaded by Agus Kurniawan")
