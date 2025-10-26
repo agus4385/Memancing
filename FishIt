@@ -1,0 +1,65 @@
+-- 🎣 Fish It Auto Fishing by Agus Kurniawan
+-- Repo: https://github.com/AgusKurniawan/Fish-It
+-- Versi ringan & bisa diatur kecepatan waktu memancing
+
+-- 🧩 Konfigurasi
+local Settings = {
+    AutoFish = true,           -- otomatis memancing
+    TimePerCast = 0.4,         -- waktu per lemparan (detik, ubah sesuka kamu)
+    EnableGUI = true,          -- tampilkan GUI status
+}
+
+-- 🧠 Fungsi bantu: buat GUI status di layar
+local function createGui()
+    local player = game.Players.LocalPlayer
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "FishingStatus"
+    gui.ResetOnSpawn = false
+    gui.Parent = player:WaitForChild("PlayerGui")
+
+    local text = Instance.new("TextLabel")
+    text.Size = UDim2.new(0, 200, 0, 40)
+    text.Position = UDim2.new(0.5, -100, 0.1, 0)
+    text.BackgroundTransparency = 0.3
+    text.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    text.TextColor3 = Color3.fromRGB(255, 255, 255)
+    text.Font = Enum.Font.SourceSansBold
+    text.TextSize = 20
+    text.Text = "🎣 Auto Fishing Aktif"
+    text.Parent = gui
+
+    return text
+end
+
+-- GUI opsional
+local statusText = nil
+if Settings.EnableGUI then
+    statusText = createGui()
+end
+
+-- 🔁 Loop otomatis memancing
+task.spawn(function()
+    local player = game.Players.LocalPlayer
+    local character = player.Character or player.CharacterAdded:Wait()
+    local tool = nil
+
+    while Settings.AutoFish do
+        -- cari alat pancing
+        tool = character:FindFirstChildOfClass("Tool")
+        if tool and tool:FindFirstChild("RemoteEvent") then
+            -- kirim sinyal pancing (sesuai sistem game Fish It)
+            tool.RemoteEvent:FireServer("Cast")
+            task.wait(Settings.TimePerCast)
+            tool.RemoteEvent:FireServer("Reel")
+        end
+
+        -- update teks GUI
+        if statusText then
+            statusText.Text = string.format("🎣 Memancing... (%.1fs)", Settings.TimePerCast)
+        end
+
+        task.wait(Settings.TimePerCast + 0.2)
+    end
+end)
+
+print("✅ Memancing.lua by Agus Kurniawan berhasil dijalankan!")
